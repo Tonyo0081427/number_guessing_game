@@ -18,3 +18,5 @@ A Bash-based number guessing game using PostgreSQL.
 ## Run
 
 ./number_guess.sh
+
+The project includes the Bash game script, PostgreSQL database dump, and test cases.

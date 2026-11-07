@@ -1,11 +1,11 @@
 #!/bin/bash
 
-PSQL="psql -X --username=freecodecamp --dbname=number_guess --tuples-only --no-align -c"
+PSQL="psql -X --username=freecodecamp --dbname=number_guess --tuples-only --no-align -q -c"
 
 SECRET_NUMBER=$(( RANDOM % 1000 + 1 ))
 
 echo "Enter your username:"
-read USERNAME
+read -r USERNAME
 
 USERNAME_SQL=$(echo "$USERNAME" | sed "s/'/''/g")
 
@@ -13,7 +13,7 @@ USER_INFO=$($PSQL "SELECT user_id, COUNT(game_id), MIN(number_of_guesses) FROM u
 
 if [[ -z $USER_INFO ]]
 then
-  USER_ID=$($PSQL "INSERT INTO users(username) VALUES('$USERNAME_SQL') RETURNING user_id;" | head -n 1)
+  USER_ID=$($PSQL "INSERT INTO users(username) VALUES('$USERNAME_SQL') RETURNING user_id;")
   echo "Welcome, $USERNAME! It looks like this is your first time here."
 else
   IFS="|" read -r USER_ID GAMES_PLAYED BEST_GAME <<< "$USER_INFO"
@@ -21,30 +21,29 @@ else
 fi
 
 echo "Guess the secret number between 1 and 1000:"
-read GUESS
+read -r GUESS
 
 GUESSES=0
 
-while [[ $GUESS != $SECRET_NUMBER ]]
+while true
 do
-  if [[ ! $GUESS =~ ^[0-9]+$ ]]
+  ((GUESSES++))
+
+  if [[ ! $GUESS =~ ^-?[0-9]+$ ]]
   then
     echo "That is not an integer, guess again:"
+  elif [[ $GUESS -gt $SECRET_NUMBER ]]
+  then
+    echo "It's lower than that, guess again:"
+  elif [[ $GUESS -lt $SECRET_NUMBER ]]
+  then
+    echo "It's higher than that, guess again:"
   else
-    ((GUESSES++))
-
-    if [[ $GUESS -gt $SECRET_NUMBER ]]
-    then
-      echo "It's lower than that, guess again:"
-    else
-      echo "It's higher than that, guess again:"
-    fi
+    break
   fi
 
-  read GUESS
+  read -r GUESS
 done
-
-((GUESSES++))
 
 echo "You guessed it in $GUESSES tries. The secret number was $SECRET_NUMBER. Nice job!"
 
